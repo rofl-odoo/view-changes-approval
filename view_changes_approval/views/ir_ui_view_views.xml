@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- REPLACE WIZARD -->
+    <record model="ir.ui.view" id="ir_ui_view_replace_wizard_form">
+        <field name="name">ir.ui.view.replace.wizard.form</field>
+        <field name="model">replace.view.wizard</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Replace duplicated view">
+                <field name="is_review_complete" invisible="True"/>
+                <header>
+                    <button type="object" name="approve_change" string="Approve change" class="btn-primary" attrs="{'invisible': [('is_review_complete', '=', True)]}"/>
+                    <button type="object" name="skip_change" string="Skip change" class="btn-primary" attrs="{'invisible': [('is_review_complete', '=', True)]}"/>
+                    <button type="object" name="apply_changes" string="Apply approved changes" class="btn-primary" attrs="{'invisible': ['|', ('is_review_complete', '=', False), ('updated_duplicated_view', '!=', False)]}"/>
+                    <button type="object" name="replace_in_duplicated_view" string="Apply on duplicated view" class="btn-primary" attrs="{'invisible': [('updated_duplicated_view', '=', False)]}" confirm="You are going to override the duplicated view. Do you want to continue?"/>
+                </header>
+                <group attrs="{'invisible': [('is_review_complete', '=', True)]}">
+                    <group>
+                        <field name="original_view" readonly="True"/>
+                        <field name="duplicated_view"  readonly="True"/>
+                    </group>
+                    <group>
+                        <field name="original_view_id" string="Id"/>
+                        <field name="duplicated_view_id" string="Id"/>
+                    </group>
+                </group>
+                <t attrs="{'invisible': [('is_review_complete', '=', True)]}">
+                    <h2><br/><u>CHANGES</u><br/></h2>
+                    <field name="before_change_x_lines" widget="ace" options="{'mode': 'xml'}"/>
+                    <p style="color: red;">&lt;&lt;&lt;&lt;&lt;&lt;&lt; CURRENT CHANGE (duplicated view)</p>
+                    <field name="actual_old_change_original" widget="ace" options="{'mode': 'xml'}"/>
+                    <p>=======</p>
+                    <field name="manual_change" widget="ace" options="{'mode': 'xml'}"/>
+                    <p style="color: green;">&gt;&gt;&gt;&gt;&gt;&gt;&gt; INCOMING CHANGE (this view)</p>
+                    <field name="after_change_x_lines" widget="ace" options="{'mode': 'xml'}"/>
+                </t>
+                <button type="object" name="reset_manual_change" string="Reset manual change" attrs="{'invisible': [('is_review_complete', '=', True)]}"/>
+                <p attrs="{'invisible': ['|', ('is_review_complete', '=', False), ('updated_duplicated_view', '!=', False)]}">
+                    All the changes have been reviewed.
+                </p>
+                <t attrs="{'invisible': [('updated_duplicated_view', '=', False)]}">
+                    <p>
+                        Review your changes
+                    </p>
+                    <field name="updated_duplicated_view" widget="ace" options="{'mode': 'xml'}"/>
+                </t>
+                <footer>
+                    <button special="cancel" string="Cancel" class="btn-default"/>
+                    <field style="margin-left: auto; margin-right: 0;" name="progression" attrs="{'invisible': [('is_review_complete', '=', True)]}"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="ir_ui_view_replace_wizard_action">
+        <field name="name">Replace in duplicated view</field>
+        <field name="res_model">replace.view.wizard</field>
+        <field name="binding_model_id" ref="view_changes_approval.model_replace_view_wizard" />
+        <field name="binding_view_types">form</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="ir_ui_view_replace_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+
+    <!-- View -->
+
+    <record id="duplicated_view_check" model="ir.actions.server">
+        <field name="name">duplicated view check</field>
+        <field name="model_id" ref="base.model_ir_ui_view"/>
+        <field name="binding_model_id" ref="base.model_ir_ui_view"/>
+        <field name="state">code</field>
+        <field name="code">model.browse(env.context.get('active_ids',[])).get_difference_duplicated_view_arch()</field>
+    </record>
+
+    <record id="replace_in_view_arch" model="ir.ui.view">
+        <field name="name">ir.ui.view.inherit.website</field>
+        <field name="model">ir.ui.view</field>
+        <field name="inherit_id" ref="website.view_view_form_extend"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="xml_id" invisible="True"/>
+                <button type="action" name="%(ir_ui_view_replace_wizard_action)d" string="replace in duplicated view"
+                        class="btn-primary" attrs="{'invisible': [('xml_id', '=', '')]}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
